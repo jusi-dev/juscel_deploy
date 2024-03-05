@@ -9,7 +9,7 @@ import {
 
 
 import { copyFinalDist, downloadS3Folder, updateStatus } from "./aws";
-import { buildProject } from "./utils";
+import { buildProject, removeOutputs } from "./utils";
 
 const client = new SQSClient({});
 const SQS_QUEUE_URL = process.env.SQS_URL || "";
@@ -44,11 +44,12 @@ export const main = async (queueUrl = SQS_QUEUE_URL) => {
             );
 
             const id = Messages[0].Body;
-            updateStatus(id ?? "", "building");
+            updateStatus(id ?? "", "Building Project...");
             await downloadS3Folder(`output/${id}`)
             await buildProject(id ?? "");
             await copyFinalDist(id ?? "");
             updateStatus(id ?? "", "deployed");
+            await removeOutputs(id ?? "");
 
         } else {
             await client.send(

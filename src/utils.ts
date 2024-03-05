@@ -16,3 +16,19 @@ export function buildProject(id: string) {
         })
     })
 }
+
+export function removeOutputs(id: string) {
+    return new Promise((resolve) => {
+        const child = spawn('rm', ['-rf', path.join(__dirname, `output/${id}`)])
+
+        child.stdout?.on('data', function(data) {
+            console.log('stdout: ' + data);
+        });
+        child.stderr?.on('data', function(data) {
+            console.log('stderr: ' + data);
+        })
+        child.on('close', function(code) {
+            resolve("");
+        })
+    })
+}

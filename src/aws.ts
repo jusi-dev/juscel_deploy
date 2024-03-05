@@ -13,6 +13,7 @@ import {
     GetObjectCommand,
     PutObjectCommand,
 } from "@aws-sdk/client-s3";
+import { removeOutputs } from "./utils";
 
 const s3Client = new S3Client({});
 
@@ -85,6 +86,8 @@ export function copyFinalDist(id: string) {
     allFiles.forEach((file) => {
         uploadFile(`dist/${id}/`+ file.slice(folderPath.length + 1), file);
     })
+
+    // removeOutputs(id);
 }
 
 const getAllFiles = (folderPath: string) => {
