@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { PutCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 const dbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dbClient);
 
@@ -78,7 +78,7 @@ function getRightFolderPath (id: string){
     }
 }
 
-export function copyFinalDist(id: string) {
+export async function copyFinalDist(id: string) {
 
     const folderPath : any = getRightFolderPath(id);
     const allFiles = getAllFiles(folderPath);
@@ -86,8 +86,6 @@ export function copyFinalDist(id: string) {
     allFiles.forEach((file) => {
         uploadFile(`dist/${id}/`+ file.slice(folderPath.length + 1), file);
     })
-
-    // removeOutputs(id);
 }
 
 const getAllFiles = (folderPath: string) => {
@@ -132,3 +130,23 @@ export const updateStatus = async (id: string, status: string) => {
     const response = await docClient.send(command);
     console.log(response);
 };
+
+export const getBuildInfos = async (id: string) => {
+    try {
+        const command = new GetCommand({
+            TableName: 'juscel',
+            Key: {
+                id: id
+            }
+        });
+
+        const response = await docClient.send(command);
+        // console.log(response);
+        return {
+            buildCommand: response.Item?.buildCommand,
+            installCommand: response.Item?.installCommand
+        }
+    } catch (err) {
+        console.log(err)
+    }
+}

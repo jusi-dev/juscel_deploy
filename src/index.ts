@@ -8,7 +8,7 @@ import {
   } from "@aws-sdk/client-sqs";
 
 
-import { copyFinalDist, downloadS3Folder, updateStatus } from "./aws";
+import { copyFinalDist, downloadS3Folder, updateStatus, getBuildInfos } from "./aws";
 import { buildProject, removeOutputs } from "./utils";
 
 const client = new SQSClient({});
@@ -46,12 +46,21 @@ export const main = async (queueUrl = SQS_QUEUE_URL) => {
                 );
 
                 const id = Messages[0].Body;
+                const buildInfos = await getBuildInfos(id ?? "")
+                const { buildCommand, installCommand } = buildInfos as any;
                 updateStatus(id ?? "", "Building Project...");
                 await downloadS3Folder(`output/${id}`)
-                await buildProject(id ?? "");
-                await copyFinalDist(id ?? "");
-                updateStatus(id ?? "", "deployed");
-                await removeOutputs(id ?? "");
+                const buildCode = await buildProject(id ?? "", buildCommand, installCommand);
+                if (buildCode === 0) {
+                    await copyFinalDist(id ?? "");
+                    updateStatus(id ?? "", "deployed");
+                } else {
+                    updateStatus(id ?? "", `Build failed. Error code (${buildCode})`)
+                }
+
+
+                // TODO: Activate it again after testing
+                // await removeOutputs(id ?? "");
 
             } else {
                 await client.send(
